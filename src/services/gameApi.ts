@@ -2,12 +2,22 @@ import axios from 'axios';
 
 const API_KEY = '1de9424f8640445e8ed8f3cf3f115d7b'; // This is a free API key for demo purposes
 const BASE_URL = 'https://api.rawg.io/api';
+const AUTH_BASE_URL = 'http://localhost:5001';
 
 export interface Game {
   id: number;
   name: string;
   background_image: string;
   genres: { id: number; name: string }[];
+}
+
+export interface User {
+  id: string;
+  username: string;
+  age: number;
+  favorite_genres: string[];
+  games: string[];
+  description?: string;
 }
 
 export const searchGames = async (searchTerm: string): Promise<Game[]> => {
@@ -41,4 +51,58 @@ export const getPopularGames = async (): Promise<Game[]> => {
     console.error('Error fetching popular games:', error);
     return [];
   }
-}; 
+};
+
+// Authentication API functions
+export const authService = {
+  login: async (username: string, password: string) => {
+    try {
+      const response = await axios.post(`${AUTH_BASE_URL}/login`, {
+        username,
+        password
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  verifyToken: async (token: string) => {
+    try {
+      const response = await axios.get(`${AUTH_BASE_URL}/verify-token`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Token management
+  saveToken: (token: string) => {
+    localStorage.setItem('gamein_token', token);
+  },
+
+  getToken: (): string | null => {
+    return localStorage.getItem('gamein_token');
+  },
+
+  removeToken: () => {
+    localStorage.removeItem('gamein_token');
+  },
+
+  saveUser: (user: User) => {
+    localStorage.setItem('gamein_user', JSON.stringify(user));
+  },
+
+  getUser: (): User | null => {
+    const userStr = localStorage.getItem('gamein_user');
+    return userStr ? JSON.parse(userStr) : null;
+  },
+
+  removeUser: () => {
+    localStorage.removeItem('gamein_user');
+  }
+};

@@ -152,11 +152,11 @@ def login():
         if not user or not check_password_hash(user['password'], data['password']):
             return jsonify({'error': 'Invalid username or password'}), 401
         
-        # Generate JWT token
+        # Generate JWT token with 1 hour expiration
         token = jwt.encode({
             'user_id': str(user['_id']),
             'username': user['username'],
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }, app.config['SECRET_KEY'], algorithm='HS256')
         
         return jsonify({
@@ -220,6 +220,56 @@ def health_check():
         'timestamp': datetime.datetime.utcnow(),
         'database': 'connected' if client.admin.command('ping') else 'disconnected'
     }), 200
+
+def token_required(f):
+    """Decorator to require JWT token for protected routes"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        
+        if not token:
+            return jsonify({'error': 'Token is missing'}), 401
+        
+        try:
+            # Remove 'Bearer ' prefix if present
+            if token.startswith('Bearer '):
+                token = token[7:]
+            
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            current_user_id = data['user_id']
+            current_username = data['username']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token has expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Token is invalid'}), 401
+        
+        return f(current_user_id, current_username, *args, **kwargs)
+    return decorated
+
+@app.route('/verify-token', methods=['GET'])
+@token_required
+def verify_token(current_user_id, current_username):
+    """Verify if JWT token is valid and not expired"""
+    try:
+        # Get user data from database
+        from bson import ObjectId
+        user = users_collection.find_one(
+            {'_id': ObjectId(current_user_id)}, 
+            {'password': 0}
+        )
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        user['_id'] = str(user['_id'])
+        return jsonify({
+            'valid': True,
+            'user': user
+        }), 200
+        
+    except Exception as e:
+        print(f"Token verification error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)

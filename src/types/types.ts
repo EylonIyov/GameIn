@@ -21,4 +21,22 @@ export interface Post {
   content: string;
   timestamp: string;
   likes: number;
-} 
+}
+
+export interface User {
+  id: string;
+  username: string;
+  age: number;
+  favorite_genres: string[];
+  games: string[];
+  description?: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (username: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}

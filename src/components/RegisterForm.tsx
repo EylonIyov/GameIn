@@ -46,11 +46,13 @@ const RegisterForm: React.FC = () => {
     password: '',
     confirmPassword: '',
     games: '',
+    general: '', // Add general error for backend errors
   });
 
   const [selectedGames, setSelectedGames] = useState<Game[]>([]);
   const [gameOptions, setGameOptions] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false); // Add submitting state
   const [searchTerm, setSearchTerm] = useState('');
   const [popularGames, setPopularGames] = useState<Game[]>([]);
 
@@ -144,7 +146,7 @@ const RegisterForm: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate before submitting
@@ -155,14 +157,65 @@ const RegisterForm: React.FC = () => {
         password: passwordError,
         confirmPassword: formData.password !== formData.confirmPassword ? 'Passwords do not match' : '',
         games: gamesError,
+        general: '',
       });
       return;
     }
 
-    console.log({
-      ...formData,
-      games: selectedGames.map(game => game.name),
-    });
+    setSubmitting(true);
+    setErrors(prev => ({ ...prev, general: '' })); // Clear previous general errors
+
+    try {
+      // Prepare data for backend
+      const registrationData = {
+        username: formData.username,
+        password: formData.password,
+        age: formData.age,
+        description: formData.description,
+        favorite_genres: formData.favoriteGenres.join(', '),
+        games: selectedGames.map(game => game.name).join(', ')
+      };
+
+      const response = await fetch('http://localhost:5001/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Registration successful
+        alert('Registration successful! Welcome to GameIn!');
+        // Reset form
+        setFormData({
+          username: '',
+          password: '',
+          confirmPassword: '',
+          age: '',
+          description: '',
+          favoriteGenres: [],
+        });
+        setSelectedGames([]);
+        setErrors({ password: '', confirmPassword: '', games: '', general: '' });
+      } else {
+        // Handle error from backend
+        setErrors(prev => ({
+          ...prev,
+          general: result.error || 'Registration failed. Please try again.'
+        }));
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setErrors(prev => ({
+        ...prev,
+        general: 'Network error. Please check if the server is running and try again.'
+      }));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -358,11 +411,17 @@ const RegisterForm: React.FC = () => {
             required
             sx={{ animation: 'fadeIn 0.5s ease-out', animationDelay: '0.5s' }}
           />
+          {errors.general && (
+            <Typography color="error" variant="body2" sx={{ mt: 2, textAlign: 'center' }}>
+              {errors.general}
+            </Typography>
+          )}
           <Button
             type="submit"
             variant="contained"
             color="primary"
             fullWidth
+            disabled={submitting}
             sx={{
               mt: 3,
               height: 48,
@@ -379,7 +438,7 @@ const RegisterForm: React.FC = () => {
               }
             }}
           >
-            Create Account
+            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Create Account'}
           </Button>
         </Box>
       </Paper>
