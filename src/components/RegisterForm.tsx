@@ -162,60 +162,10 @@ const RegisterForm: React.FC = () => {
       return;
     }
 
-    setSubmitting(true);
-    setErrors(prev => ({ ...prev, general: '' })); // Clear previous general errors
-
-    try {
-      // Prepare data for backend
-      const registrationData = {
-        username: formData.username,
-        password: formData.password,
-        age: formData.age,
-        description: formData.description,
-        favorite_genres: formData.favoriteGenres.join(', '),
-        games: selectedGames.map(game => game.name).join(', ')
-      };
-
-      const response = await fetch('http://localhost:5001/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(registrationData),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        // Registration successful
-        alert('Registration successful! Welcome to GameIn!');
-        // Reset form
-        setFormData({
-          username: '',
-          password: '',
-          confirmPassword: '',
-          age: '',
-          description: '',
-          favoriteGenres: [],
-        });
-        setSelectedGames([]);
-        setErrors({ password: '', confirmPassword: '', games: '', general: '' });
-      } else {
-        // Handle error from backend
-        setErrors(prev => ({
-          ...prev,
-          general: result.error || 'Registration failed. Please try again.'
-        }));
-      }
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      setErrors(prev => ({
-        ...prev,
-        general: 'Network error. Please check if the server is running and try again.'
-      }));
-    } finally {
-      setSubmitting(false);
-    }
+    console.log({
+      ...formData,
+      games: selectedGames.map(game => game.name),
+    });
   };
 
   return (
@@ -223,8 +173,8 @@ const RegisterForm: React.FC = () => {
       <Paper 
         elevation={3} 
         sx={{ 
-          p: 4, 
-          maxWidth: 600, 
+          p: 6, 
+          maxWidth: 900, 
           mx: 'auto', 
           mt: 4,
           transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',

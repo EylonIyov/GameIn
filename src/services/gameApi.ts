@@ -1,9 +1,5 @@
 import axios from 'axios';
 
-const API_KEY = '1de9424f8640445e8ed8f3cf3f115d7b'; // This is a free API key for demo purposes
-const BASE_URL = 'https://api.rawg.io/api';
-const AUTH_BASE_URL = 'http://localhost:5001';
-
 export interface Game {
   id: number;
   name: string;
@@ -11,14 +7,8 @@ export interface Game {
   genres: { id: number; name: string }[];
 }
 
-export interface User {
-  id: string;
-  username: string;
-  age: number;
-  favorite_genres: string[];
-  games: string[];
-  description?: string;
-}
+const API_KEY = '1de9424f8640445e8ed8f3cf3f115d7b'; // This is a free API key for demo purposes
+const BASE_URL = 'https://api.rawg.io/api';
 
 export const searchGames = async (searchTerm: string): Promise<Game[]> => {
   try {
