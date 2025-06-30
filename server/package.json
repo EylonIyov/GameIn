@@ -1,12 +1,32 @@
 {
-  "name": "server",
+  "name": "gamein-server",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Backend server for GameIn social gaming platform - Python Flask with MongoDB",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "setup": "python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt",
+    "start": "python3 app.py",
+    "dev": "python3 app.py",
+    "activate": "source venv/bin/activate"
   },
-  "keywords": [],
+  "keywords": [
+    "flask",
+    "mongodb",
+    "gaming",
+    "social",
+    "python"
+  ],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "mongoose": "^8.0.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
 }
