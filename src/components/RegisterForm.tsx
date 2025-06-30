@@ -144,7 +144,7 @@ const RegisterForm: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate before submitting
@@ -159,10 +159,55 @@ const RegisterForm: React.FC = () => {
       return;
     }
 
-    console.log({
-      ...formData,
-      games: selectedGames.map(game => game.name),
-    });
+    try {
+      setLoading(true);
+      
+      const registrationData = {
+        ...formData,
+        favorite_genres: formData.favoriteGenres.join(', '),
+        games: selectedGames.map(game => game.name).join(', ')
+      };
+
+      const response = await fetch('http://localhost:5000/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Registration successful
+        alert('Registration successful! Welcome to GameIn!');
+        // Reset form
+        setFormData({
+          username: '',
+          password: '',
+          confirmPassword: '',
+          age: '',
+          description: '',
+          favoriteGenres: [],
+        });
+        setSelectedGames([]);
+      } else {
+        // Handle error from backend
+        setErrors({
+          password: result.error?.includes('Password') ? result.error : '',
+          confirmPassword: '',
+          games: result.error?.includes('game') ? result.error : '',
+        });
+        if (!result.error?.includes('Password') && !result.error?.includes('game')) {
+          alert(result.error || 'Registration failed. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('Network error. Please check if the server is running and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -170,8 +215,8 @@ const RegisterForm: React.FC = () => {
       <Paper 
         elevation={3} 
         sx={{ 
-          p: 4, 
-          maxWidth: 600, 
+          p: 6, 
+          maxWidth: 900, 
           mx: 'auto', 
           mt: 4,
           transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
@@ -387,4 +432,4 @@ const RegisterForm: React.FC = () => {
   );
 };
 
-export default RegisterForm; 
+export default RegisterForm;
